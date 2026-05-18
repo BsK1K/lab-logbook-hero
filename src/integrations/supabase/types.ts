@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chamados: {
+        Row: {
+          created_at: string
+          detalhes: string | null
+          estado: string
+          id: string
+          imagens: string[]
+          marca: string
+          numero_serie: string
+          possui_garantia: boolean
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: string | null
+          estado: string
+          id?: string
+          imagens?: string[]
+          marca: string
+          numero_serie: string
+          possui_garantia?: boolean
+        }
+        Update: {
+          created_at?: string
+          detalhes?: string | null
+          estado?: string
+          id?: string
+          imagens?: string[]
+          marca?: string
+          numero_serie?: string
+          possui_garantia?: boolean
+        }
+        Relationships: []
+      }
+      netbook_loans: {
+        Row: {
+          created_at: string
+          devolvido_at: string | null
+          id: string
+          nome: string
+          qtd_multilaser: number
+          qtd_positivo: number
+          retirada_at: string
+          sala: string
+          tipo_usuario: string
+        }
+        Insert: {
+          created_at?: string
+          devolvido_at?: string | null
+          id?: string
+          nome: string
+          qtd_multilaser?: number
+          qtd_positivo?: number
+          retirada_at?: string
+          sala: string
+          tipo_usuario: string
+        }
+        Update: {
+          created_at?: string
+          devolvido_at?: string | null
+          id?: string
+          nome?: string
+          qtd_multilaser?: number
+          qtd_positivo?: number
+          retirada_at?: string
+          sala?: string
+          tipo_usuario?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
