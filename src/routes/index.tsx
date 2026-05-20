@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AppShell } from "@/components/AppShell";
+import { toast } from "sonner";
 import {
   Laptop,
   Wrench,
@@ -63,10 +65,12 @@ function Index() {
   }, []);
 
   const marcarDevolvido = async (id: string) => {
-    await supabase
+    const { error } = await supabase
       .from("netbook_loans")
       .update({ devolvido_at: new Date().toISOString() })
       .eq("id", id);
+    if (error) toast.error("Não foi possível marcar como devolvido");
+    else toast.success("Devolução registrada");
     fetchAll();
   };
 
@@ -81,182 +85,188 @@ function Index() {
   const comGarantia = chamados.filter((c) => c.possui_garantia).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto max-w-6xl px-6 py-6">
-          <h1 className="text-2xl font-semibold">Sala de Informática</h1>
-          <p className="text-sm text-muted-foreground">
-            Dashboard de controle de netbooks e chamados
-          </p>
-        </div>
-      </header>
+    <AppShell>
+      <div className="mb-5">
+        <h1 className="text-xl font-semibold sm:text-2xl">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Controle de netbooks e chamados
+        </p>
+      </div>
 
-      <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
-        {/* Stats */}
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            icon={<PackageCheck className="h-5 w-5" />}
-            label="Aparelhos em uso"
-            value={aparelhosEmUso}
-            hint={`${emUso.length} retiradas ativas`}
-          />
-          <StatCard
-            icon={<Users className="h-5 w-5" />}
-            label="Total retiradas"
-            value={loans.length}
-            hint={`${totalPositivo} Positivo · ${totalMultilaser} Multilaser`}
-          />
-          <StatCard
-            icon={<AlertTriangle className="h-5 w-5" />}
-            label="Chamados abertos"
-            value={totalChamados}
-            hint="Aparelhos danificados"
-          />
-          <StatCard
-            icon={<ShieldCheck className="h-5 w-5" />}
-            label="Com garantia"
-            value={comGarantia}
-            hint={`${totalChamados - comGarantia} sem garantia`}
-          />
-        </section>
+      {/* Stats */}
+      <section
+        aria-label="Indicadores"
+        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+      >
+        <StatCard
+          icon={<PackageCheck className="h-5 w-5" />}
+          label="Em uso"
+          value={aparelhosEmUso}
+          hint={`${emUso.length} retiradas ativas`}
+        />
+        <StatCard
+          icon={<Users className="h-5 w-5" />}
+          label="Retiradas"
+          value={loans.length}
+          hint={`${totalPositivo} P · ${totalMultilaser} M`}
+        />
+        <StatCard
+          icon={<AlertTriangle className="h-5 w-5" />}
+          label="Chamados"
+          value={totalChamados}
+          hint="Aparelhos danificados"
+        />
+        <StatCard
+          icon={<ShieldCheck className="h-5 w-5" />}
+          label="Com garantia"
+          value={comGarantia}
+          hint={`${totalChamados - comGarantia} sem garantia`}
+        />
+      </section>
 
-        {/* Quick actions */}
-        <section className="grid gap-3 sm:grid-cols-2">
-          <ActionCard
-            to="/netbooks"
-            icon={<Laptop className="h-6 w-6" />}
-            title="Nova retirada"
-            desc="Registrar netbooks emprestados"
-          />
-          <ActionCard
-            to="/chamados"
-            icon={<Wrench className="h-6 w-6" />}
-            title="Novo chamado"
-            desc="Registrar aparelho danificado"
-          />
-        </section>
+      {/* Quick actions */}
+      <section
+        aria-label="Ações rápidas"
+        className="mt-6 grid gap-3 sm:grid-cols-2"
+      >
+        <ActionCard
+          to="/netbooks"
+          icon={<Laptop className="h-6 w-6" />}
+          title="Nova retirada"
+          desc="Registrar netbooks emprestados"
+        />
+        <ActionCard
+          to="/chamados"
+          icon={<Wrench className="h-6 w-6" />}
+          title="Novo chamado"
+          desc="Registrar aparelho danificado"
+        />
+      </section>
 
-        {/* Lists */}
-        <section className="grid gap-6 lg:grid-cols-2">
-          {/* Retiradas */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                Retiradas recentes
-              </h2>
-              <Link
-                to="/netbooks"
-                className="flex items-center gap-1 text-xs text-primary hover:underline"
-              >
-                Ver tudo <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <div className="space-y-2">
-              {loading && (
-                <p className="text-sm text-muted-foreground">Carregando...</p>
-              )}
-              {!loading && loans.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma retirada registrada.
-                </p>
-              )}
-              {loans.slice(0, 6).map((l) => (
-                <div key={l.id} className="rounded-lg border bg-card p-3 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">
-                        {l.nome}{" "}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          ({l.tipo_usuario})
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Sala {l.sala} · P {l.qtd_positivo} · M {l.qtd_multilaser}
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {new Date(l.retirada_at).toLocaleString("pt-BR")}
-                      </div>
-                    </div>
-                    {l.devolvido_at ? (
-                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs">
-                        Devolvido
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => marcarDevolvido(l.id)}
-                        className="flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                      >
-                        <Check className="h-3 w-3" /> Devolver
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Lists */}
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              Retiradas recentes
+            </h2>
+            <Link
+              to="/netbooks"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Ver tudo <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </Link>
           </div>
-
-          {/* Chamados */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                Chamados recentes
-              </h2>
-              <Link
-                to="/chamados"
-                className="flex items-center gap-1 text-xs text-primary hover:underline"
+          <ul className="space-y-2">
+            {loading && (
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            )}
+            {!loading && loans.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma retirada registrada.
+              </p>
+            )}
+            {loans.slice(0, 6).map((l) => (
+              <li
+                key={l.id}
+                className="rounded-lg border bg-card p-3 text-sm"
               >
-                Ver tudo <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <div className="space-y-2">
-              {loading && (
-                <p className="text-sm text-muted-foreground">Carregando...</p>
-              )}
-              {!loading && chamados.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum chamado registrado.
-                </p>
-              )}
-              {chamados.slice(0, 6).map((c) => (
-                <div key={c.id} className="rounded-lg border bg-card p-3 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">{c.estado}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {c.marca} · SN: {c.numero_serie}
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {new Date(c.created_at).toLocaleString("pt-BR")}
-                      </div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">
+                      {l.nome}{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({l.tipo_usuario})
+                      </span>
                     </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                        c.possui_garantia
-                          ? "bg-primary/10 text-primary"
-                          : "bg-secondary"
-                      }`}
-                    >
-                      {c.possui_garantia ? "Garantia" : "Sem garantia"}
-                    </span>
+                    <div className="text-xs text-muted-foreground">
+                      Sala {l.sala} · P {l.qtd_positivo} · M {l.qtd_multilaser}
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {new Date(l.retirada_at).toLocaleString("pt-BR")}
+                    </div>
                   </div>
-                  {c.imagens.length > 0 && (
-                    <div className="mt-2 flex gap-1.5">
-                      {c.imagens.slice(0, 4).map((url, i) => (
-                        <img
-                          key={i}
-                          src={url}
-                          className="h-10 w-10 rounded object-cover"
-                        />
-                      ))}
-                    </div>
+                  {l.devolvido_at ? (
+                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs">
+                      Devolvido
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => marcarDevolvido(l.id)}
+                      aria-label={`Marcar retirada de ${l.nome} como devolvida`}
+                      className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Check className="h-3 w-3" aria-hidden="true" /> Devolver
+                    </button>
                   )}
                 </div>
-              ))}
-            </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              Chamados recentes
+            </h2>
+            <Link
+              to="/chamados"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Ver tudo <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </Link>
           </div>
-        </section>
-      </main>
-    </div>
+          <ul className="space-y-2">
+            {loading && (
+              <p className="text-sm text-muted-foreground">Carregando...</p>
+            )}
+            {!loading && chamados.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Nenhum chamado registrado.
+              </p>
+            )}
+            {chamados.slice(0, 6).map((c) => (
+              <li key={c.id} className="rounded-lg border bg-card p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{c.estado}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {c.marca} · SN: {c.numero_serie}
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {new Date(c.created_at).toLocaleString("pt-BR")}
+                    </div>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                      c.possui_garantia
+                        ? "bg-primary/10 text-primary"
+                        : "bg-secondary"
+                    }`}
+                  >
+                    {c.possui_garantia ? "Garantia" : "Sem garantia"}
+                  </span>
+                </div>
+                {c.imagens.length > 0 && (
+                  <div className="mt-2 flex gap-1.5">
+                    {c.imagens.slice(0, 4).map((url, i) => (
+                      <img
+                        key={i}
+                        src={url}
+                        alt={`Foto do dano ${i + 1} do chamado ${c.numero_serie}`}
+                        loading="lazy"
+                        className="h-10 w-10 rounded object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </AppShell>
   );
 }
 
@@ -272,14 +282,16 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-xl border bg-card p-3 sm:p-4">
       <div className="flex items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="text-xs font-medium uppercase tracking-wide">
+        <span className="text-[11px] font-medium uppercase tracking-wide sm:text-xs">
           {label}
         </span>
       </div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
+      <div className="mt-1 text-2xl font-semibold sm:mt-2 sm:text-3xl">
+        {value}
+      </div>
       {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
     </div>
   );
@@ -299,14 +311,17 @@ function ActionCard({
   return (
     <Link
       to={to}
-      className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition hover:border-primary hover:shadow-md"
+      className="group flex min-h-16 items-center gap-4 rounded-xl border bg-card p-4 transition hover:border-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:p-5"
     >
       <div className="rounded-lg bg-primary/10 p-3 text-primary">{icon}</div>
       <div className="flex-1">
         <div className="font-semibold">{title}</div>
         <div className="text-sm text-muted-foreground">{desc}</div>
       </div>
-      <ArrowRight className="h-5 w-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+      <ArrowRight
+        className="h-5 w-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary"
+        aria-hidden="true"
+      />
     </Link>
   );
 }

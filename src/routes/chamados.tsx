@@ -1,7 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ImagePlus, X } from "lucide-react";
+import { AppShell } from "@/components/AppShell";
+import { toast } from "sonner";
+import { ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/chamados")({
   component: ChamadosPage,
@@ -56,7 +58,10 @@ function ChamadosPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!numeroSerie.trim() || !estado.trim()) return;
+    if (!numeroSerie.trim() || !estado.trim()) {
+      toast.error("Preencha número de série e estado");
+      return;
+    }
     setLoading(true);
 
     const urls: string[] = [];
@@ -81,48 +86,54 @@ function ChamadosPage() {
     });
 
     setLoading(false);
-    if (!error) {
-      setNumeroSerie("");
-      setEstado("");
-      setDetalhes("");
-      setGarantia(false);
-      setFiles([]);
-      setPreviews([]);
-      fetchChamados();
+    if (error) {
+      toast.error("Erro ao registrar chamado");
+      return;
     }
+    toast.success("Chamado registrado");
+    setNumeroSerie("");
+    setEstado("");
+    setDetalhes("");
+    setGarantia(false);
+    setFiles([]);
+    setPreviews([]);
+    fetchChamados();
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-5">
-          <Link to="/" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="text-xl font-semibold">Chamados</h1>
-        </div>
-      </header>
+    <AppShell>
+      <h1 className="mb-5 text-xl font-semibold sm:text-2xl">Chamados</h1>
 
-      <main className="mx-auto grid max-w-5xl gap-8 px-6 py-8 lg:grid-cols-2">
-        <form onSubmit={submit} className="space-y-5 rounded-xl border bg-card p-6">
-          <Field label="Número de série">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <form
+          onSubmit={submit}
+          className="space-y-5 rounded-xl border bg-card p-4 sm:p-6"
+          aria-label="Formulário de novo chamado"
+        >
+          <Field label="Número de série" htmlFor="ns">
             <input
+              id="ns"
               value={numeroSerie}
               onChange={(e) => setNumeroSerie(e.target.value)}
               className="input"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
               required
             />
           </Field>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">Marca</label>
-            <div className="flex gap-2">
+          <fieldset>
+            <legend className="mb-2 block text-sm font-medium">Marca</legend>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup">
               {(["Positivo", "Multilaser"] as const).map((m) => (
                 <button
                   type="button"
                   key={m}
+                  role="radio"
+                  aria-checked={marca === m}
                   onClick={() => setMarca(m)}
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm transition ${
+                  className={`min-h-11 rounded-md border px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     marca === m
                       ? "border-primary bg-primary text-primary-foreground"
                       : "hover:border-foreground/30"
@@ -132,10 +143,11 @@ function ChamadosPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          <Field label="Estado / Problema">
+          <Field label="Estado / Problema" htmlFor="estado">
             <input
+              id="estado"
               value={estado}
               onChange={(e) => setEstado(e.target.value)}
               className="input"
@@ -144,75 +156,87 @@ function ChamadosPage() {
             />
           </Field>
 
-          <Field label="Detalhes do problema">
+          <Field label="Detalhes do problema" htmlFor="detalhes">
             <textarea
+              id="detalhes"
               value={detalhes}
               onChange={(e) => setDetalhes(e.target.value)}
-              className="input min-h-[80px]"
+              className="input min-h-[96px]"
               placeholder="Descreva o problema..."
             />
           </Field>
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-3 text-sm min-h-11">
             <input
               type="checkbox"
               checked={garantia}
               onChange={(e) => setGarantia(e.target.checked)}
-              className="h-4 w-4"
+              className="h-5 w-5"
             />
             Possui garantia
           </label>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Imagens do dano</label>
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed py-6 text-sm text-muted-foreground hover:bg-accent">
-              <ImagePlus className="h-5 w-5" />
-              Adicionar fotos
+            <span className="mb-2 block text-sm font-medium">
+              Imagens do dano
+            </span>
+            <label className="flex min-h-24 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed py-6 text-sm text-muted-foreground hover:bg-accent focus-within:ring-2 focus-within:ring-ring">
+              <ImagePlus className="h-5 w-5" aria-hidden="true" />
+              Tirar foto ou escolher
               <input
                 type="file"
                 accept="image/*"
                 multiple
-                className="hidden"
+                capture="environment"
+                className="sr-only"
                 onChange={(e) => onFiles(e.target.files)}
+                aria-label="Adicionar fotos do dano"
               />
             </label>
             {previews.length > 0 && (
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <ul className="mt-3 grid grid-cols-3 gap-2">
                 {previews.map((src, i) => (
-                  <div key={i} className="relative">
-                    <img src={src} className="h-20 w-full rounded-md object-cover" />
+                  <li key={i} className="relative">
+                    <img
+                      src={src}
+                      alt={`Pré-visualização ${i + 1}`}
+                      className="h-24 w-full rounded-md object-cover"
+                    />
                     <button
                       type="button"
                       onClick={() => removeFile(i)}
-                      className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                      aria-label={`Remover imagem ${i + 1}`}
+                      className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50 min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {loading ? "Enviando..." : "Registrar chamado"}
           </button>
         </form>
 
-        <section>
+        <section aria-label="Últimos chamados">
           <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
             Últimos chamados
           </h2>
-          <div className="space-y-3">
+          <ul className="space-y-3">
             {chamados.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum chamado ainda.</p>
+              <p className="text-sm text-muted-foreground">
+                Nenhum chamado ainda.
+              </p>
             )}
             {chamados.map((c) => (
-              <div key={c.id} className="rounded-lg border bg-card p-4 text-sm">
+              <li key={c.id} className="rounded-lg border bg-card p-4 text-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium">{c.estado}</div>
@@ -221,7 +245,7 @@ function ChamadosPage() {
                     </div>
                   </div>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
                       c.possui_garantia
                         ? "bg-primary/10 text-primary"
                         : "bg-secondary"
@@ -231,49 +255,72 @@ function ChamadosPage() {
                   </span>
                 </div>
                 {c.detalhes && (
-                  <p className="mt-2 text-xs text-muted-foreground">{c.detalhes}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {c.detalhes}
+                  </p>
                 )}
                 {c.imagens.length > 0 && (
-                  <div className="mt-2 flex gap-1.5">
+                  <ul className="mt-2 flex flex-wrap gap-1.5">
                     {c.imagens.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer">
-                        <img
-                          src={url}
-                          className="h-14 w-14 rounded object-cover"
-                        />
-                      </a>
+                      <li key={i}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Abrir imagem ${i + 1} do chamado ${c.numero_serie}`}
+                          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                        >
+                          <img
+                            src={url}
+                            alt={`Foto ${i + 1} do dano`}
+                            loading="lazy"
+                            className="h-16 w-16 rounded object-cover"
+                          />
+                        </a>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
                 <div className="mt-2 text-xs text-muted-foreground">
                   {new Date(c.created_at).toLocaleString("pt-BR")}
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
-      </main>
+      </div>
 
       <style>{`
         .input {
           width: 100%;
-          border-radius: 0.375rem;
+          border-radius: 0.5rem;
           border: 1px solid var(--border);
           background: var(--background);
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
+          padding: 0.625rem 0.75rem;
+          font-size: 1rem;
+          min-height: 2.75rem;
           outline: none;
         }
-        .input:focus { border-color: var(--ring); }
+        .input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px var(--ring); }
       `}</style>
-    </div>
+    </AppShell>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium">{label}</label>
+      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium">
+        {label}
+      </label>
       {children}
     </div>
   );

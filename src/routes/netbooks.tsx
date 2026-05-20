@@ -1,7 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check } from "lucide-react";
+import { AppShell } from "@/components/AppShell";
+import { toast } from "sonner";
+import { Check, Minus, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/netbooks")({
   component: NetbooksPage,
@@ -43,9 +45,18 @@ function NetbooksPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim() || !sala.trim()) return;
-    if (tipo === "aluno" && !sobrenome.trim()) return;
-    if (qtdPositivo + qtdMultilaser === 0) return;
+    if (!nome.trim() || !sala.trim()) {
+      toast.error("Preencha nome e sala");
+      return;
+    }
+    if (tipo === "aluno" && !sobrenome.trim()) {
+      toast.error("Informe o sobrenome do aluno");
+      return;
+    }
+    if (qtdPositivo + qtdMultilaser === 0) {
+      toast.error("Informe ao menos 1 aparelho");
+      return;
+    }
 
     setLoading(true);
     const nomeCompleto =
@@ -58,49 +69,52 @@ function NetbooksPage() {
       qtd_multilaser: qtdMultilaser,
     });
     setLoading(false);
-    if (!error) {
-      setNome("");
-      setSobrenome("");
-      setSala("");
-      setQtdPositivo(0);
-      setQtdMultilaser(0);
-      fetchLoans();
+    if (error) {
+      toast.error("Erro ao registrar retirada");
+      return;
     }
+    toast.success("Retirada registrada");
+    setNome("");
+    setSobrenome("");
+    setSala("");
+    setQtdPositivo(0);
+    setQtdMultilaser(0);
+    fetchLoans();
   };
 
   const marcarDevolvido = async (id: string) => {
-    await supabase
+    const { error } = await supabase
       .from("netbook_loans")
       .update({ devolvido_at: new Date().toISOString() })
       .eq("id", id);
+    if (error) toast.error("Não foi possível marcar devolução");
+    else toast.success("Devolução registrada");
     fetchLoans();
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-5">
-          <Link to="/" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="text-xl font-semibold">Retirada de Netbooks</h1>
-        </div>
-      </header>
+    <AppShell>
+      <h1 className="mb-5 text-xl font-semibold sm:text-2xl">
+        Retirada de Netbooks
+      </h1>
 
-      <main className="mx-auto grid max-w-5xl gap-8 px-6 py-8 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <form
           onSubmit={submit}
-          className="space-y-5 rounded-xl border bg-card p-6"
+          className="space-y-5 rounded-xl border bg-card p-4 sm:p-6"
+          aria-label="Formulário de retirada"
         >
-          <div>
-            <label className="mb-2 block text-sm font-medium">Tipo</label>
-            <div className="flex gap-2">
+          <fieldset>
+            <legend className="mb-2 block text-sm font-medium">Tipo</legend>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup">
               {(["professor", "aluno"] as const).map((t) => (
                 <button
                   type="button"
                   key={t}
+                  role="radio"
+                  aria-checked={tipo === t}
                   onClick={() => setTipo(t)}
-                  className={`flex-1 rounded-md border px-3 py-2 text-sm capitalize transition ${
+                  className={`min-h-11 rounded-md border px-3 py-2 text-sm capitalize transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     tipo === t
                       ? "border-primary bg-primary text-primary-foreground"
                       : "hover:border-foreground/30"
@@ -110,41 +124,51 @@ function NetbooksPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           {tipo === "professor" ? (
-            <Field label="Primeiro nome">
+            <Field label="Primeiro nome" htmlFor="nome">
               <input
+                id="nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="input"
                 placeholder="Ex: Carlos"
+                autoComplete="given-name"
+                autoCapitalize="words"
                 required
               />
             </Field>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Nome">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Nome" htmlFor="aluno-nome">
                 <input
+                  id="aluno-nome"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   className="input"
+                  autoComplete="given-name"
+                  autoCapitalize="words"
                   required
                 />
               </Field>
-              <Field label="Sobrenome">
+              <Field label="Sobrenome" htmlFor="aluno-sobrenome">
                 <input
+                  id="aluno-sobrenome"
                   value={sobrenome}
                   onChange={(e) => setSobrenome(e.target.value)}
                   className="input"
+                  autoComplete="family-name"
+                  autoCapitalize="words"
                   required
                 />
               </Field>
             </div>
           )}
 
-          <Field label="Sala de destino">
+          <Field label="Sala de destino" htmlFor="sala">
             <input
+              id="sala"
               value={sala}
               onChange={(e) => setSala(e.target.value)}
               className="input"
@@ -153,51 +177,42 @@ function NetbooksPage() {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Positivo">
-              <input
-                type="number"
-                min={0}
-                value={qtdPositivo}
-                onChange={(e) => setQtdPositivo(Number(e.target.value))}
-                className="input"
-              />
-            </Field>
-            <Field label="Multilaser">
-              <input
-                type="number"
-                min={0}
-                value={qtdMultilaser}
-                onChange={(e) => setQtdMultilaser(Number(e.target.value))}
-                className="input"
-              />
-            </Field>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Stepper
+              label="Positivo"
+              value={qtdPositivo}
+              onChange={setQtdPositivo}
+            />
+            <Stepper
+              label="Multilaser"
+              value={qtdMultilaser}
+              onChange={setQtdMultilaser}
+            />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+            className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50 min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {loading ? "Registrando..." : "Registrar retirada"}
           </button>
         </form>
 
-        <section>
+        <section aria-label="Últimas retiradas">
           <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
             Últimas retiradas
           </h2>
-          <div className="space-y-2">
+          <ul className="space-y-2">
             {loans.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
+              <p className="text-sm text-muted-foreground">
+                Nenhum registro ainda.
+              </p>
             )}
             {loans.map((l) => (
-              <div
-                key={l.id}
-                className="rounded-lg border bg-card p-3 text-sm"
-              >
+              <li key={l.id} className="rounded-lg border bg-card p-3 text-sm">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-medium">
                       {l.nome}{" "}
                       <span className="text-xs font-normal text-muted-foreground">
@@ -213,45 +228,100 @@ function NetbooksPage() {
                     </div>
                   </div>
                   {l.devolvido_at ? (
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
+                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs">
                       Devolvido
                     </span>
                   ) : (
                     <button
                       onClick={() => marcarDevolvido(l.id)}
-                      className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-accent"
+                      aria-label={`Marcar ${l.nome} como devolvido`}
+                      className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <Check className="h-3 w-3" /> Devolver
+                      <Check className="h-3 w-3" aria-hidden="true" /> Devolver
                     </button>
                   )}
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
-      </main>
+      </div>
 
       <style>{`
         .input {
           width: 100%;
-          border-radius: 0.375rem;
+          border-radius: 0.5rem;
           border: 1px solid var(--border);
           background: var(--background);
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
+          padding: 0.625rem 0.75rem;
+          font-size: 1rem;
+          min-height: 2.75rem;
           outline: none;
         }
-        .input:focus { border-color: var(--ring); }
+        .input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px var(--ring); }
       `}</style>
+    </AppShell>
+  );
+}
+
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium">
+        {label}
+      </label>
+      {children}
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Stepper({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (n: number) => void;
+}) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium">{label}</label>
-      {children}
+      <span className="mb-1.5 block text-sm font-medium">{label}</span>
+      <div className="flex items-stretch overflow-hidden rounded-lg border">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(0, value - 1))}
+          aria-label={`Diminuir ${label}`}
+          className="flex h-11 w-11 items-center justify-center hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Minus className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          value={value}
+          onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+          className="w-full border-x bg-background text-center text-base font-medium focus:outline-none"
+          aria-label={`Quantidade ${label}`}
+        />
+        <button
+          type="button"
+          onClick={() => onChange(value + 1)}
+          aria-label={`Aumentar ${label}`}
+          className="flex h-11 w-11 items-center justify-center hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 }
