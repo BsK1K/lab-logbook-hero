@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+import { logActivity, statusColor, statusLabel } from "@/lib/logger";
 import {
   Laptop,
   Wrench,
@@ -12,6 +13,7 @@ import {
   ShieldCheck,
   ArrowRight,
   Check,
+  History,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -36,6 +38,7 @@ type Chamado = {
   estado: string;
   possui_garantia: boolean;
   imagens: string[];
+  status: string;
   created_at: string;
 };
 
@@ -64,13 +67,21 @@ function Index() {
     fetchAll();
   }, []);
 
-  const marcarDevolvido = async (id: string) => {
+  const marcarDevolvido = async (loan: Loan) => {
     const { error } = await supabase
       .from("netbook_loans")
       .update({ devolvido_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", loan.id);
     if (error) toast.error("Não foi possível marcar como devolvido");
-    else toast.success("Devolução registrada");
+    else {
+      await logActivity({
+        action: "devolver",
+        entity: "retirada",
+        entity_id: loan.id,
+        description: `Devolução: ${loan.nome} (${loan.qtd_positivo}P + ${loan.qtd_multilaser}M da Sala ${loan.sala})`,
+      });
+      toast.success("Devolução registrada");
+    }
     fetchAll();
   };
 
@@ -82,6 +93,9 @@ function Index() {
     0,
   );
   const totalChamados = chamados.length;
+  const chamadosAbertos = chamados.filter(
+    (c) => c.status !== "resolvido",
+  ).length;
   const comGarantia = chamados.filter((c) => c.possui_garantia).length;
 
   return (
@@ -112,9 +126,9 @@ function Index() {
         />
         <StatCard
           icon={<AlertTriangle className="h-5 w-5" />}
-          label="Chamados"
-          value={totalChamados}
-          hint="Aparelhos danificados"
+          label="Chamados abertos"
+          value={chamadosAbertos}
+          hint={`${totalChamados} no total`}
         />
         <StatCard
           icon={<ShieldCheck className="h-5 w-5" />}
@@ -127,7 +141,7 @@ function Index() {
       {/* Quick actions */}
       <section
         aria-label="Ações rápidas"
-        className="mt-6 grid gap-3 sm:grid-cols-2"
+        className="mt-6 grid gap-3 sm:grid-cols-3"
       >
         <ActionCard
           to="/netbooks"
@@ -140,6 +154,12 @@ function Index() {
           icon={<Wrench className="h-6 w-6" />}
           title="Novo chamado"
           desc="Registrar aparelho danificado"
+        />
+        <ActionCard
+          to="/logs"
+          icon={<History className="h-6 w-6" />}
+          title="Logs"
+          desc="Histórico de ações"
         />
       </section>
 
@@ -192,7 +212,7 @@ function Index() {
                     </span>
                   ) : (
                     <button
-                      onClick={() => marcarDevolvido(l.id)}
+                      onClick={() => marcarDevolvido(l)}
                       aria-label={`Marcar retirada de ${l.nome} como devolvida`}
                       className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
@@ -227,7 +247,10 @@ function Index() {
               </p>
             )}
             {chamados.slice(0, 6).map((c) => (
-              <li key={c.id} className="rounded-lg border bg-card p-3 text-sm">
+              <li
+                key={c.id}
+                className={`rounded-lg border bg-card p-3 text-sm transition ${c.status === "resolvido" ? "opacity-60" : ""}`}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate font-medium">{c.estado}</div>
@@ -239,13 +262,9 @@ function Index() {
                     </div>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                      c.possui_garantia
-                        ? "bg-primary/10 text-primary"
-                        : "bg-secondary"
-                    }`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${statusColor(c.status)}`}
                   >
-                    {c.possui_garantia ? "Garantia" : "Sem garantia"}
+                    {statusLabel(c.status)}
                   </span>
                 </div>
                 {c.imagens.length > 0 && (
