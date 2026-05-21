@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
+import { logActivity, statusColor, statusLabel } from "@/lib/logger";
 import {
   Laptop,
   Wrench,
@@ -12,6 +13,7 @@ import {
   ShieldCheck,
   ArrowRight,
   Check,
+  History,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -36,6 +38,7 @@ type Chamado = {
   estado: string;
   possui_garantia: boolean;
   imagens: string[];
+  status: string;
   created_at: string;
 };
 
@@ -64,13 +67,21 @@ function Index() {
     fetchAll();
   }, []);
 
-  const marcarDevolvido = async (id: string) => {
+  const marcarDevolvido = async (loan: Loan) => {
     const { error } = await supabase
       .from("netbook_loans")
       .update({ devolvido_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", loan.id);
     if (error) toast.error("Não foi possível marcar como devolvido");
-    else toast.success("Devolução registrada");
+    else {
+      await logActivity({
+        action: "devolver",
+        entity: "retirada",
+        entity_id: loan.id,
+        description: `Devolução: ${loan.nome} (${loan.qtd_positivo}P + ${loan.qtd_multilaser}M da Sala ${loan.sala})`,
+      });
+      toast.success("Devolução registrada");
+    }
     fetchAll();
   };
 
@@ -82,6 +93,9 @@ function Index() {
     0,
   );
   const totalChamados = chamados.length;
+  const chamadosAbertos = chamados.filter(
+    (c) => c.status !== "resolvido",
+  ).length;
   const comGarantia = chamados.filter((c) => c.possui_garantia).length;
 
   return (
