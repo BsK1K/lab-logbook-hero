@@ -141,7 +141,7 @@ function Index() {
       {/* Quick actions */}
       <section
         aria-label="Ações rápidas"
-        className="mt-6 grid gap-3 sm:grid-cols-2"
+        className="mt-6 grid gap-3 sm:grid-cols-3"
       >
         <ActionCard
           to="/netbooks"
@@ -154,6 +154,12 @@ function Index() {
           icon={<Wrench className="h-6 w-6" />}
           title="Novo chamado"
           desc="Registrar aparelho danificado"
+        />
+        <ActionCard
+          to="/logs"
+          icon={<History className="h-6 w-6" />}
+          title="Logs"
+          desc="Histórico de ações"
         />
       </section>
 
