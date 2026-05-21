@@ -206,7 +206,7 @@ function Index() {
                     </span>
                   ) : (
                     <button
-                      onClick={() => marcarDevolvido(l.id)}
+                      onClick={() => marcarDevolvido(l)}
                       aria-label={`Marcar retirada de ${l.nome} como devolvida`}
                       className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
