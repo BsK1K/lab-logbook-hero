@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
 import { Check, Minus, Plus } from "lucide-react";
+import { logActivity } from "@/lib/logger";
 
 export const Route = createFileRoute("/netbooks")({
   component: NetbooksPage,
@@ -61,18 +62,29 @@ function NetbooksPage() {
     setLoading(true);
     const nomeCompleto =
       tipo === "aluno" ? `${nome.trim()} ${sobrenome.trim()}` : nome.trim();
-    const { error } = await supabase.from("netbook_loans").insert({
-      tipo_usuario: tipo,
-      nome: nomeCompleto,
-      sala: sala.trim(),
-      qtd_positivo: qtdPositivo,
-      qtd_multilaser: qtdMultilaser,
-    });
+    const { data, error } = await supabase
+      .from("netbook_loans")
+      .insert({
+        tipo_usuario: tipo,
+        nome: nomeCompleto,
+        sala: sala.trim(),
+        qtd_positivo: qtdPositivo,
+        qtd_multilaser: qtdMultilaser,
+      })
+      .select()
+      .single();
     setLoading(false);
     if (error) {
       toast.error("Erro ao registrar retirada");
       return;
     }
+    await logActivity({
+      action: "retirar",
+      entity: "retirada",
+      entity_id: data?.id,
+      description: `${nomeCompleto} (${tipo}) retirou ${qtdPositivo} Positivo + ${qtdMultilaser} Multilaser para Sala ${sala.trim()}`,
+      metadata: { tipo, sala: sala.trim(), qtdPositivo, qtdMultilaser },
+    });
     toast.success("Retirada registrada");
     setNome("");
     setSobrenome("");
@@ -82,13 +94,21 @@ function NetbooksPage() {
     fetchLoans();
   };
 
-  const marcarDevolvido = async (id: string) => {
+  const marcarDevolvido = async (l: Loan) => {
     const { error } = await supabase
       .from("netbook_loans")
       .update({ devolvido_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", l.id);
     if (error) toast.error("Não foi possível marcar devolução");
-    else toast.success("Devolução registrada");
+    else {
+      await logActivity({
+        action: "devolver",
+        entity: "retirada",
+        entity_id: l.id,
+        description: `Devolução: ${l.nome} (${l.qtd_positivo}P + ${l.qtd_multilaser}M da Sala ${l.sala})`,
+      });
+      toast.success("Devolução registrada");
+    }
     fetchLoans();
   };
 
@@ -233,7 +253,7 @@ function NetbooksPage() {
                     </span>
                   ) : (
                     <button
-                      onClick={() => marcarDevolvido(l.id)}
+                      onClick={() => marcarDevolvido(l)}
                       aria-label={`Marcar ${l.nome} como devolvido`}
                       className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
