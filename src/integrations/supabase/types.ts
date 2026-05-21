@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          description: string
+          entity: string
+          entity_id: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       chamados: {
         Row: {
           created_at: string
@@ -24,6 +54,8 @@ export type Database = {
           marca: string
           numero_serie: string
           possui_garantia: boolean
+          status: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -34,6 +66,8 @@ export type Database = {
           marca: string
           numero_serie: string
           possui_garantia?: boolean
+          status?: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -44,6 +78,8 @@ export type Database = {
           marca?: string
           numero_serie?: string
           possui_garantia?: boolean
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
