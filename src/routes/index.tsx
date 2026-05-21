@@ -126,9 +126,9 @@ function Index() {
         />
         <StatCard
           icon={<AlertTriangle className="h-5 w-5" />}
-          label="Chamados"
-          value={totalChamados}
-          hint="Aparelhos danificados"
+          label="Chamados abertos"
+          value={chamadosAbertos}
+          hint={`${totalChamados} no total`}
         />
         <StatCard
           icon={<ShieldCheck className="h-5 w-5" />}
@@ -241,7 +241,10 @@ function Index() {
               </p>
             )}
             {chamados.slice(0, 6).map((c) => (
-              <li key={c.id} className="rounded-lg border bg-card p-3 text-sm">
+              <li
+                key={c.id}
+                className={`rounded-lg border bg-card p-3 text-sm transition ${c.status === "resolvido" ? "opacity-60" : ""}`}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate font-medium">{c.estado}</div>
@@ -253,13 +256,9 @@ function Index() {
                     </div>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                      c.possui_garantia
-                        ? "bg-primary/10 text-primary"
-                        : "bg-secondary"
-                    }`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${statusColor(c.status)}`}
                   >
-                    {c.possui_garantia ? "Garantia" : "Sem garantia"}
+                    {statusLabel(c.status)}
                   </span>
                 </div>
                 {c.imagens.length > 0 && (
