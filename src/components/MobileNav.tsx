@@ -1,10 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Laptop, Wrench } from "lucide-react";
+import { Home, Laptop, Wrench, History } from "lucide-react";
 
 const items = [
   { to: "/", label: "Início", icon: Home },
   { to: "/netbooks", label: "Netbooks", icon: Laptop },
   { to: "/chamados", label: "Chamados", icon: Wrench },
+  { to: "/logs", label: "Logs", icon: History },
 ] as const;
 
 export function MobileNav() {

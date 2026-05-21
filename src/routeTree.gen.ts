@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as NetbooksRouteImport } from './routes/netbooks'
+import { Route as LogsRouteImport } from './routes/logs'
 import { Route as ChamadosRouteImport } from './routes/chamados'
 import { Route as IndexRouteImport } from './routes/index'
 
 const NetbooksRoute = NetbooksRouteImport.update({
   id: '/netbooks',
   path: '/netbooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogsRoute = LogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChamadosRoute = ChamadosRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
+  '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
+  '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
+  '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chamados' | '/netbooks'
+  fullPaths: '/' | '/chamados' | '/logs' | '/netbooks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chamados' | '/netbooks'
-  id: '__root__' | '/' | '/chamados' | '/netbooks'
+  to: '/' | '/chamados' | '/logs' | '/netbooks'
+  id: '__root__' | '/' | '/chamados' | '/logs' | '/netbooks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChamadosRoute: typeof ChamadosRoute
+  LogsRoute: typeof LogsRoute
   NetbooksRoute: typeof NetbooksRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/netbooks'
       fullPath: '/netbooks'
       preLoaderRoute: typeof NetbooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logs': {
+      id: '/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof LogsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chamados': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChamadosRoute: ChamadosRoute,
+  LogsRoute: LogsRoute,
   NetbooksRoute: NetbooksRoute,
 }
 export const routeTree = rootRouteImport
