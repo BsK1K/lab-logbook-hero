@@ -23,7 +23,7 @@ export async function logActivity(params: {
       entity: params.entity,
       entity_id: params.entity_id ?? null,
       description: params.description,
-      metadata: params.metadata ?? {},
+      metadata: (params.metadata ?? {}) as never,
     });
   } catch (e) {
     console.error("[logger] falha ao salvar log", e);
