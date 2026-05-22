@@ -44,6 +44,7 @@ async function uploadFiles(files: File[]): Promise<string[]> {
 }
 
 function ChamadosPage() {
+  const navigate = useNavigate();
   const [numeroSerie, setNumeroSerie] = useState("");
   const [marca, setMarca] = useState<"Positivo" | "Multilaser">("Positivo");
   const [estado, setEstado] = useState("");
@@ -55,6 +56,36 @@ function ChamadosPage() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [showArchived, setShowArchived] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const criarTarefaDoChamado = async (c: Chamado) => {
+    const title = `Reparar ${c.marca} SN ${c.numero_serie}`;
+    const description = `Chamado: ${c.estado}${c.detalhes ? `\n\n${c.detalhes}` : ""}${
+      c.possui_garantia ? "\n\n(Possui garantia)" : ""
+    }`;
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({
+        title,
+        description,
+        status: "a_fazer",
+        priority: c.possui_garantia ? "media" : "alta",
+        chamado_id: c.id,
+      })
+      .select()
+      .single();
+    if (error || !data) {
+      toast.error("Não foi possível criar a tarefa");
+      return;
+    }
+    await logActivity({
+      action: "criar",
+      entity: "tarefa",
+      entity_id: data.id,
+      description: `Tarefa criada a partir do chamado SN ${c.numero_serie}`,
+    });
+    toast.success("Tarefa criada! Abrindo quadro...");
+    navigate({ to: "/tarefas", search: { task: data.id } });
+  };
 
   const fetchChamados = async () => {
     const { data } = await supabase
@@ -354,11 +385,13 @@ function ChamadoCard({
   onEdit,
   onDelete,
   onStatus,
+  onCreateTask,
 }: {
   chamado: Chamado;
   onEdit: () => void;
   onDelete: () => void;
   onStatus: (s: ChamadoStatus) => void;
+  onCreateTask: () => void;
 }) {
   const archived = c.status === "resolvido";
   return (
