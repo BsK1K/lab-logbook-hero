@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Pencil, Plus, Trash2, X, GraduationCap, Users } from "lucide-react";
 import { logActivity } from "@/lib/logger";
 
 export const Route = createFileRoute("/netbooks")({
   component: NetbooksPage,
 });
+
+type Categoria = "geral" | "tecnico";
 
 type Loan = {
   id: string;
@@ -19,10 +21,17 @@ type Loan = {
   qtd_multilaser: number;
   retirada_at: string;
   devolvido_at: string | null;
+  categoria: Categoria;
+};
+
+const CATEGORIA_LABEL: Record<Categoria, string> = {
+  geral: "Geral",
+  tecnico: "Curso Técnico",
 };
 
 function NetbooksPage() {
   const [tipo, setTipo] = useState<"professor" | "aluno">("professor");
+  const [categoria, setCategoria] = useState<Categoria>("geral");
   const [nome, setNome] = useState("");
   const [sobrenome, setSobrenome] = useState("");
   const [sala, setSala] = useState("");
@@ -30,13 +39,15 @@ function NetbooksPage() {
   const [qtdMultilaser, setQtdMultilaser] = useState(0);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(false);
+  const [filtro, setFiltro] = useState<"todos" | Categoria>("todos");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchLoans = async () => {
     const { data } = await supabase
       .from("netbook_loans")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(100);
     if (data) setLoans(data as Loan[]);
   };
 
@@ -70,6 +81,7 @@ function NetbooksPage() {
         sala: sala.trim(),
         qtd_positivo: qtdPositivo,
         qtd_multilaser: qtdMultilaser,
+        categoria,
       })
       .select()
       .single();
@@ -82,8 +94,8 @@ function NetbooksPage() {
       action: "retirar",
       entity: "retirada",
       entity_id: data?.id,
-      description: `${nomeCompleto} (${tipo}) retirou ${qtdPositivo} Positivo + ${qtdMultilaser} Multilaser para Sala ${sala.trim()}`,
-      metadata: { tipo, sala: sala.trim(), qtdPositivo, qtdMultilaser },
+      description: `[${CATEGORIA_LABEL[categoria]}] ${nomeCompleto} (${tipo}) retirou ${qtdPositivo} Positivo + ${qtdMultilaser} Multilaser para Sala ${sala.trim()}`,
+      metadata: { tipo, sala: sala.trim(), qtdPositivo, qtdMultilaser, categoria },
     });
     toast.success("Retirada registrada");
     setNome("");
@@ -112,6 +124,28 @@ function NetbooksPage() {
     fetchLoans();
   };
 
+  const excluir = async (l: Loan) => {
+    if (!confirm(`Excluir retirada de ${l.nome}? Esta ação não pode ser desfeita.`)) return;
+    const { error } = await supabase.from("netbook_loans").delete().eq("id", l.id);
+    if (error) {
+      toast.error("Erro ao excluir");
+      return;
+    }
+    await logActivity({
+      action: "excluir",
+      entity: "retirada",
+      entity_id: l.id,
+      description: `Retirada excluída: ${l.nome} (Sala ${l.sala})`,
+    });
+    toast.success("Retirada excluída");
+    fetchLoans();
+  };
+
+  const filtered = useMemo(
+    () => loans.filter((l) => filtro === "todos" || l.categoria === filtro),
+    [loans, filtro],
+  );
+
   return (
     <AppShell>
       <h1 className="mb-5 text-xl font-semibold sm:text-2xl">
@@ -124,6 +158,43 @@ function NetbooksPage() {
           className="space-y-5 rounded-xl border bg-card p-4 sm:p-6"
           aria-label="Formulário de retirada"
         >
+          <fieldset>
+            <legend className="mb-2 block text-sm font-medium">Categoria</legend>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={categoria === "geral"}
+                onClick={() => setCategoria("geral")}
+                className={`flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  categoria === "geral"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "hover:border-foreground/30"
+                }`}
+              >
+                <Users className="h-4 w-4" aria-hidden="true" /> Geral
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={categoria === "tecnico"}
+                onClick={() => setCategoria("tecnico")}
+                className={`flex min-h-11 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  categoria === "tecnico"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "hover:border-foreground/30"
+                }`}
+              >
+                <GraduationCap className="h-4 w-4" aria-hidden="true" /> Curso Técnico
+              </button>
+            </div>
+            {categoria === "tecnico" && (
+              <p className="mt-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+                Esta retirada será separada como netbooks do <strong>Curso Técnico</strong>.
+              </p>
+            )}
+          </fieldset>
+
           <fieldset>
             <legend className="mb-2 block text-sm font-medium">Tipo</legend>
             <div className="grid grid-cols-2 gap-2" role="radiogroup">
@@ -198,16 +269,8 @@ function NetbooksPage() {
           </Field>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Stepper
-              label="Positivo"
-              value={qtdPositivo}
-              onChange={setQtdPositivo}
-            />
-            <Stepper
-              label="Multilaser"
-              value={qtdMultilaser}
-              onChange={setQtdMultilaser}
-            />
+            <Stepper label="Positivo" value={qtdPositivo} onChange={setQtdPositivo} />
+            <Stepper label="Multilaser" value={qtdMultilaser} onChange={setQtdMultilaser} />
           </div>
 
           <button
@@ -220,49 +283,108 @@ function NetbooksPage() {
         </form>
 
         <section aria-label="Últimas retiradas">
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
-            Últimas retiradas
-          </h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              Últimas retiradas
+            </h2>
+            <div className="flex gap-1 rounded-md border p-0.5 text-xs">
+              {(["todos", "geral", "tecnico"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFiltro(f)}
+                  className={`rounded px-2 py-1 transition ${
+                    filtro === f
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent"
+                  }`}
+                >
+                  {f === "todos" ? "Todos" : CATEGORIA_LABEL[f]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <ul className="space-y-2">
-            {loans.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Nenhum registro ainda.
-              </p>
+            {filtered.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhum registro.</p>
             )}
-            {loans.map((l) => (
-              <li key={l.id} className="rounded-lg border bg-card p-3 text-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-medium">
-                      {l.nome}{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        ({l.tipo_usuario})
-                      </span>
+            {filtered.map((l) =>
+              editingId === l.id ? (
+                <EditLoanCard
+                  key={l.id}
+                  loan={l}
+                  onCancel={() => setEditingId(null)}
+                  onSaved={() => {
+                    setEditingId(null);
+                    fetchLoans();
+                  }}
+                />
+              ) : (
+                <li
+                  key={l.id}
+                  className={`rounded-lg border bg-card p-3 text-sm ${l.devolvido_at ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-medium">{l.nome}</span>
+                        <span className="text-xs font-normal text-muted-foreground">
+                          ({l.tipo_usuario})
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            l.categoria === "tecnico"
+                              ? "bg-primary/15 text-primary"
+                              : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {CATEGORIA_LABEL[l.categoria]}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        Sala {l.sala} · Positivo {l.qtd_positivo} · Multilaser{" "}
+                        {l.qtd_multilaser}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {new Date(l.retirada_at).toLocaleString("pt-BR")}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Sala {l.sala} · Positivo {l.qtd_positivo} · Multilaser{" "}
-                      {l.qtd_multilaser}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {new Date(l.retirada_at).toLocaleString("pt-BR")}
+                    <div className="flex shrink-0 flex-col gap-1">
+                      {l.devolvido_at ? (
+                        <span className="rounded-full bg-secondary px-2 py-0.5 text-center text-xs">
+                          Devolvido
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => marcarDevolvido(l)}
+                          aria-label={`Marcar ${l.nome} como devolvido`}
+                          className="flex items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <Check className="h-3 w-3" aria-hidden="true" /> Devolver
+                        </button>
+                      )}
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setEditingId(l.id)}
+                          aria-label={`Editar retirada de ${l.nome}`}
+                          className="flex flex-1 items-center justify-center rounded-md border px-2 py-1.5 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <Pencil className="h-3 w-3" aria-hidden="true" />
+                        </button>
+                        <button
+                          onClick={() => excluir(l)}
+                          aria-label={`Excluir retirada de ${l.nome}`}
+                          className="flex flex-1 items-center justify-center rounded-md border border-destructive/30 px-2 py-1.5 text-xs text-destructive min-h-9 hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <Trash2 className="h-3 w-3" aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  {l.devolvido_at ? (
-                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs">
-                      Devolvido
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => marcarDevolvido(l)}
-                      aria-label={`Marcar ${l.nome} como devolvido`}
-                      className="flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <Check className="h-3 w-3" aria-hidden="true" /> Devolver
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
+                </li>
+              ),
+            )}
           </ul>
         </section>
       </div>
@@ -281,6 +403,120 @@ function NetbooksPage() {
         .input:focus { border-color: var(--ring); box-shadow: 0 0 0 2px var(--ring); }
       `}</style>
     </AppShell>
+  );
+}
+
+function EditLoanCard({
+  loan,
+  onCancel,
+  onSaved,
+}: {
+  loan: Loan;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const [nome, setNome] = useState(loan.nome);
+  const [sala, setSala] = useState(loan.sala);
+  const [categoria, setCategoria] = useState<Categoria>(loan.categoria);
+  const [tipo, setTipo] = useState(loan.tipo_usuario);
+  const [qtdPositivo, setQtdPositivo] = useState(loan.qtd_positivo);
+  const [qtdMultilaser, setQtdMultilaser] = useState(loan.qtd_multilaser);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("netbook_loans")
+      .update({
+        nome: nome.trim(),
+        sala: sala.trim(),
+        categoria,
+        tipo_usuario: tipo,
+        qtd_positivo: qtdPositivo,
+        qtd_multilaser: qtdMultilaser,
+      })
+      .eq("id", loan.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar");
+      return;
+    }
+    await logActivity({
+      action: "editar",
+      entity: "retirada",
+      entity_id: loan.id,
+      description: `Retirada editada: ${nome.trim()} (Sala ${sala.trim()})`,
+    });
+    toast.success("Retirada atualizada");
+    onSaved();
+  };
+
+  return (
+    <li className="space-y-3 rounded-lg border-2 border-primary/40 bg-card p-3 text-sm">
+      <div className="grid grid-cols-2 gap-2">
+        {(["geral", "tecnico"] as const).map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setCategoria(c)}
+            className={`min-h-9 rounded-md border px-2 py-1.5 text-xs transition ${
+              categoria === c
+                ? "border-primary bg-primary text-primary-foreground"
+                : "hover:border-foreground/30"
+            }`}
+          >
+            {CATEGORIA_LABEL[c]}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {(["professor", "aluno"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTipo(t)}
+            className={`min-h-9 rounded-md border px-2 py-1.5 text-xs capitalize transition ${
+              tipo === t
+                ? "border-primary bg-primary text-primary-foreground"
+                : "hover:border-foreground/30"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <input
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+        className="input"
+        placeholder="Nome"
+      />
+      <input
+        value={sala}
+        onChange={(e) => setSala(e.target.value)}
+        className="input"
+        placeholder="Sala"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <Stepper label="Positivo" value={qtdPositivo} onChange={setQtdPositivo} />
+        <Stepper label="Multilaser" value={qtdMultilaser} onChange={setQtdMultilaser} />
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="flex flex-1 items-center justify-center gap-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 min-h-9"
+        >
+          <Check className="h-3 w-3" /> {saving ? "Salvando..." : "Salvar"}
+        </button>
+        <button
+          onClick={onCancel}
+          className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs min-h-9 hover:bg-accent"
+        >
+          <X className="h-3 w-3" /> Cancelar
+        </button>
+      </div>
+    </li>
   );
 }
 
