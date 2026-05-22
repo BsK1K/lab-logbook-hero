@@ -85,6 +85,7 @@ export type Database = {
       }
       netbook_loans: {
         Row: {
+          categoria: string
           created_at: string
           devolvido_at: string | null
           id: string
@@ -96,6 +97,7 @@ export type Database = {
           tipo_usuario: string
         }
         Insert: {
+          categoria?: string
           created_at?: string
           devolvido_at?: string | null
           id?: string
@@ -107,6 +109,7 @@ export type Database = {
           tipo_usuario: string
         }
         Update: {
+          categoria?: string
           created_at?: string
           devolvido_at?: string | null
           id?: string
