@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { logActivity, statusColor, statusLabel } from "@/lib/logger";
+import { logActivity, statusColor, statusLabel, taskColumnLabel } from "@/lib/logger";
 import {
   Laptop,
   Wrench,
@@ -14,6 +14,9 @@ import {
   ArrowRight,
   Check,
   History,
+  KanbanSquare,
+  NotebookPen,
+  ListTodo,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -42,24 +45,46 @@ type Chamado = {
   created_at: string;
 };
 
+type Task = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  updated_at: string;
+};
+
+type Note = {
+  id: string;
+  title: string;
+  content: string;
+  color: string | null;
+  pinned: boolean;
+  updated_at: string;
+};
+
 function Index() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [chamados, setChamados] = useState<Chamado[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
-    const [{ data: l }, { data: c }] = await Promise.all([
+    const [{ data: l }, { data: c }, { data: t }, { data: n }] = await Promise.all([
+      supabase.from("netbook_loans").select("*").order("created_at", { ascending: false }),
+      supabase.from("chamados").select("*").order("created_at", { ascending: false }),
+      supabase.from("tasks").select("*").order("updated_at", { ascending: false }),
       supabase
-        .from("netbook_loans")
+        .from("notes")
         .select("*")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("chamados")
-        .select("*")
-        .order("created_at", { ascending: false }),
+        .order("pinned", { ascending: false })
+        .order("updated_at", { ascending: false }),
     ]);
     if (l) setLoans(l as Loan[]);
     if (c) setChamados(c as Chamado[]);
+    if (t) setTasks(t as Task[]);
+    if (n) setNotes(n as Note[]);
     setLoading(false);
   };
 
