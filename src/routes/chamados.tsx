@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { ImagePlus, X, Pencil, Trash2, Save, XCircle } from "lucide-react";
+import { ImagePlus, X, Pencil, Trash2, Save, XCircle, KanbanSquare } from "lucide-react";
 import {
   logActivity,
   STATUS_OPTIONS,
@@ -44,6 +44,7 @@ async function uploadFiles(files: File[]): Promise<string[]> {
 }
 
 function ChamadosPage() {
+  const navigate = useNavigate();
   const [numeroSerie, setNumeroSerie] = useState("");
   const [marca, setMarca] = useState<"Positivo" | "Multilaser">("Positivo");
   const [estado, setEstado] = useState("");
@@ -55,6 +56,36 @@ function ChamadosPage() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [showArchived, setShowArchived] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const criarTarefaDoChamado = async (c: Chamado) => {
+    const title = `Reparar ${c.marca} SN ${c.numero_serie}`;
+    const description = `Chamado: ${c.estado}${c.detalhes ? `\n\n${c.detalhes}` : ""}${
+      c.possui_garantia ? "\n\n(Possui garantia)" : ""
+    }`;
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({
+        title,
+        description,
+        status: "a_fazer",
+        priority: c.possui_garantia ? "media" : "alta",
+        chamado_id: c.id,
+      })
+      .select()
+      .single();
+    if (error || !data) {
+      toast.error("Não foi possível criar a tarefa");
+      return;
+    }
+    await logActivity({
+      action: "criar",
+      entity: "tarefa",
+      entity_id: data.id,
+      description: `Tarefa criada a partir do chamado SN ${c.numero_serie}`,
+    });
+    toast.success("Tarefa criada! Abrindo quadro...");
+    navigate({ to: "/tarefas", search: { task: data.id } });
+  };
 
   const fetchChamados = async () => {
     const { data } = await supabase
@@ -324,6 +355,7 @@ function ChamadosPage() {
                     onEdit={() => setEditingId(c.id)}
                     onDelete={() => deleteChamado(c)}
                     onStatus={(s) => changeStatus(c, s)}
+                    onCreateTask={() => criarTarefaDoChamado(c)}
                   />
                 ),
               )}
@@ -353,11 +385,13 @@ function ChamadoCard({
   onEdit,
   onDelete,
   onStatus,
+  onCreateTask,
 }: {
   chamado: Chamado;
   onEdit: () => void;
   onDelete: () => void;
   onStatus: (s: ChamadoStatus) => void;
+  onCreateTask: () => void;
 }) {
   const archived = c.status === "resolvido";
   return (
@@ -432,7 +466,14 @@ function ChamadoCard({
         <span className="text-xs text-muted-foreground">
           {new Date(c.created_at).toLocaleString("pt-BR")}
         </span>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
+          <button
+            onClick={onCreateTask}
+            aria-label="Criar tarefa a partir deste chamado"
+            className="inline-flex min-h-9 items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <KanbanSquare className="h-3.5 w-3.5" /> Criar tarefa
+          </button>
           <button
             onClick={onEdit}
             aria-label="Editar chamado"

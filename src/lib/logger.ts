@@ -6,9 +6,11 @@ export type LogAction =
   | "excluir"
   | "status"
   | "devolver"
-  | "retirar";
+  | "retirar"
+  | "comentar"
+  | "mover";
 
-export type LogEntity = "chamado" | "retirada";
+export type LogEntity = "chamado" | "retirada" | "tarefa" | "nota" | "comentario";
 
 export async function logActivity(params: {
   action: LogAction;
@@ -37,6 +39,8 @@ export const ACTION_LABELS: Record<LogAction, string> = {
   status: "Alteração de status",
   devolver: "Devolução",
   retirar: "Retirada",
+  comentar: "Comentário",
+  mover: "Movimentação",
 };
 
 export const ACTION_DESCRIPTIONS: Record<LogAction, string> = {
@@ -46,6 +50,8 @@ export const ACTION_DESCRIPTIONS: Record<LogAction, string> = {
   status: "O status de um chamado foi alterado.",
   devolver: "Aparelhos retirados foram marcados como devolvidos.",
   retirar: "Aparelhos foram retirados para uma sala.",
+  comentar: "Um comentário foi adicionado a uma tarefa.",
+  mover: "Uma tarefa foi movida entre colunas do quadro.",
 };
 
 export const STATUS_OPTIONS = [
@@ -74,4 +80,36 @@ export function statusLabel(s: string) {
 }
 export function statusColor(s: string) {
   return STATUS_OPTIONS.find((o) => o.value === s)?.color ?? "bg-secondary";
+}
+
+// ---------- Tasks (Kanban) ----------
+export const TASK_COLUMNS = [
+  { value: "a_fazer", label: "A fazer", color: "bg-slate-500/15 text-slate-700 dark:text-slate-300" },
+  { value: "fazendo", label: "Fazendo", color: "bg-blue-500/15 text-blue-700 dark:text-blue-400" },
+  { value: "revisao", label: "Em revisão", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  { value: "concluido", label: "Concluído", color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
+] as const;
+
+export type TaskStatus = (typeof TASK_COLUMNS)[number]["value"];
+
+export const TASK_PRIORITIES = [
+  { value: "baixa", label: "Baixa", color: "bg-muted text-muted-foreground" },
+  { value: "media", label: "Média", color: "bg-blue-500/15 text-blue-700 dark:text-blue-400" },
+  { value: "alta", label: "Alta", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  { value: "urgente", label: "Urgente", color: "bg-destructive/15 text-destructive" },
+] as const;
+
+export type TaskPriority = (typeof TASK_PRIORITIES)[number]["value"];
+
+export function taskColumnLabel(s: string) {
+  return TASK_COLUMNS.find((o) => o.value === s)?.label ?? s;
+}
+export function taskColumnColor(s: string) {
+  return TASK_COLUMNS.find((o) => o.value === s)?.color ?? "bg-secondary";
+}
+export function priorityLabel(s: string) {
+  return TASK_PRIORITIES.find((o) => o.value === s)?.label ?? s;
+}
+export function priorityColor(s: string) {
+  return TASK_PRIORITIES.find((o) => o.value === s)?.color ?? "bg-muted";
 }

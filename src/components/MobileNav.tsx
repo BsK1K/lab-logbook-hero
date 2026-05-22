@@ -1,8 +1,10 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Laptop, Wrench, History } from "lucide-react";
+import { Home, Laptop, Wrench, History, KanbanSquare, NotebookPen } from "lucide-react";
 
 const items = [
   { to: "/", label: "Início", icon: Home },
+  { to: "/tarefas", label: "Tarefas", icon: KanbanSquare },
+  { to: "/notas", label: "Notas", icon: NotebookPen },
   { to: "/netbooks", label: "Netbooks", icon: Laptop },
   { to: "/chamados", label: "Chamados", icon: Wrench },
   { to: "/logs", label: "Logs", icon: History },
@@ -16,18 +18,16 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="mx-auto flex max-w-md items-stretch">
+      <ul className="mx-auto flex max-w-3xl items-stretch overflow-x-auto">
         {items.map(({ to, label, icon: Icon }) => {
           const active = pathname === to;
           return (
-            <li key={to} className="flex-1">
+            <li key={to} className="flex-1 min-w-[64px]">
               <Link
                 to={to}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs transition ${
-                  active
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] transition ${
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
@@ -44,10 +44,7 @@ export function MobileNav() {
 export function DesktopNav() {
   const { pathname } = useLocation();
   return (
-    <nav
-      aria-label="Navegação principal"
-      className="hidden items-center gap-1 md:flex"
-    >
+    <nav aria-label="Navegação principal" className="hidden items-center gap-1 md:flex">
       {items.map(({ to, label, icon: Icon }) => {
         const active = pathname === to;
         return (

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { logActivity, statusColor, statusLabel } from "@/lib/logger";
+import { logActivity, statusColor, statusLabel, taskColumnLabel } from "@/lib/logger";
 import {
   Laptop,
   Wrench,
@@ -14,6 +14,9 @@ import {
   ArrowRight,
   Check,
   History,
+  KanbanSquare,
+  NotebookPen,
+  ListTodo,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -42,24 +45,46 @@ type Chamado = {
   created_at: string;
 };
 
+type Task = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  updated_at: string;
+};
+
+type Note = {
+  id: string;
+  title: string;
+  content: string;
+  color: string | null;
+  pinned: boolean;
+  updated_at: string;
+};
+
 function Index() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [chamados, setChamados] = useState<Chamado[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
-    const [{ data: l }, { data: c }] = await Promise.all([
+    const [{ data: l }, { data: c }, { data: t }, { data: n }] = await Promise.all([
+      supabase.from("netbook_loans").select("*").order("created_at", { ascending: false }),
+      supabase.from("chamados").select("*").order("created_at", { ascending: false }),
+      supabase.from("tasks").select("*").order("updated_at", { ascending: false }),
       supabase
-        .from("netbook_loans")
+        .from("notes")
         .select("*")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("chamados")
-        .select("*")
-        .order("created_at", { ascending: false }),
+        .order("pinned", { ascending: false })
+        .order("updated_at", { ascending: false }),
     ]);
     if (l) setLoans(l as Loan[]);
     if (c) setChamados(c as Chamado[]);
+    if (t) setTasks(t as Task[]);
+    if (n) setNotes(n as Note[]);
     setLoading(false);
   };
 
@@ -93,10 +118,10 @@ function Index() {
     0,
   );
   const totalChamados = chamados.length;
-  const chamadosAbertos = chamados.filter(
-    (c) => c.status !== "resolvido",
-  ).length;
+  const chamadosAbertos = chamados.filter((c) => c.status !== "resolvido").length;
   const comGarantia = chamados.filter((c) => c.possui_garantia).length;
+  const tarefasAbertas = tasks.filter((t) => t.status !== "concluido").length;
+  const totalNotas = notes.length;
 
   return (
     <AppShell>
@@ -110,7 +135,7 @@ function Index() {
       {/* Stats */}
       <section
         aria-label="Indicadores"
-        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+        className="grid grid-cols-2 gap-3 lg:grid-cols-6"
       >
         <StatCard
           icon={<PackageCheck className="h-5 w-5" />}
@@ -134,26 +159,50 @@ function Index() {
           icon={<ShieldCheck className="h-5 w-5" />}
           label="Com garantia"
           value={comGarantia}
-          hint={`${totalChamados - comGarantia} sem garantia`}
+          hint={`${totalChamados - comGarantia} sem`}
+        />
+        <StatCard
+          icon={<ListTodo className="h-5 w-5" />}
+          label="Tarefas abertas"
+          value={tarefasAbertas}
+          hint={`${tasks.length} no total`}
+        />
+        <StatCard
+          icon={<NotebookPen className="h-5 w-5" />}
+          label="Notas"
+          value={totalNotas}
+          hint={`${notes.filter((n) => n.pinned).length} fixadas`}
         />
       </section>
 
       {/* Quick actions */}
       <section
         aria-label="Ações rápidas"
-        className="mt-6 grid gap-3 sm:grid-cols-3"
+        className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
       >
+        <ActionCard
+          to="/tarefas"
+          icon={<KanbanSquare className="h-6 w-6" />}
+          title="Quadro de tarefas"
+          desc="Kanban estilo ClickUp"
+        />
+        <ActionCard
+          to="/notas"
+          icon={<NotebookPen className="h-6 w-6" />}
+          title="Anotações"
+          desc="Páginas e lembretes"
+        />
         <ActionCard
           to="/netbooks"
           icon={<Laptop className="h-6 w-6" />}
           title="Nova retirada"
-          desc="Registrar netbooks emprestados"
+          desc="Registrar empréstimos"
         />
         <ActionCard
           to="/chamados"
           icon={<Wrench className="h-6 w-6" />}
           title="Novo chamado"
-          desc="Registrar aparelho danificado"
+          desc="Aparelho danificado"
         />
         <ActionCard
           to="/logs"
@@ -280,6 +329,73 @@ function Index() {
                     ))}
                   </div>
                 )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Tasks + Notes preview */}
+      <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground">Tarefas recentes</h2>
+            <Link
+              to="/tarefas"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Abrir quadro <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </Link>
+          </div>
+          <ul className="space-y-2">
+            {!loading && tasks.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhuma tarefa ainda.</p>
+            )}
+            {tasks.slice(0, 6).map((t) => (
+              <li
+                key={t.id}
+                className={`rounded-lg border bg-card p-3 text-sm ${t.status === "concluido" ? "opacity-60" : ""}`}
+              >
+                <Link
+                  to="/tarefas"
+                  search={{ task: t.id }}
+                  className="flex items-start justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className={`truncate font-medium ${t.status === "concluido" ? "line-through" : ""}`}>
+                      {t.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {taskColumnLabel(t.status)}
+                      {t.due_date &&
+                        ` · prazo ${new Date(t.due_date + "T00:00:00").toLocaleDateString("pt-BR")}`}
+                    </div>
+                  </div>
+                  <ArrowRight className="h-3 w-3 mt-1 shrink-0 text-muted-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground">Notas recentes</h2>
+            <Link
+              to="/notas"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Ver tudo <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            </Link>
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {!loading && notes.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhuma nota ainda.</p>
+            )}
+            {notes.slice(0, 6).map((n) => (
+              <li key={n.id} className="rounded-lg border bg-card p-3 text-sm">
+                <div className="truncate font-medium">{n.title}</div>
+                <p className="line-clamp-2 text-xs text-muted-foreground">{n.content || "—"}</p>
               </li>
             ))}
           </ul>
