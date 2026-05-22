@@ -9,11 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TarefasRouteImport } from './routes/tarefas'
+import { Route as NotasRouteImport } from './routes/notas'
 import { Route as NetbooksRouteImport } from './routes/netbooks'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as ChamadosRouteImport } from './routes/chamados'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TarefasRoute = TarefasRouteImport.update({
+  id: '/tarefas',
+  path: '/tarefas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotasRoute = NotasRouteImport.update({
+  id: '/notas',
+  path: '/notas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NetbooksRoute = NetbooksRouteImport.update({
   id: '/netbooks',
   path: '/netbooks',
@@ -40,12 +52,16 @@ export interface FileRoutesByFullPath {
   '/chamados': typeof ChamadosRoute
   '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
+  '/notas': typeof NotasRoute
+  '/tarefas': typeof TarefasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
   '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
+  '/notas': typeof NotasRoute
+  '/tarefas': typeof TarefasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +69,22 @@ export interface FileRoutesById {
   '/chamados': typeof ChamadosRoute
   '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
+  '/notas': typeof NotasRoute
+  '/tarefas': typeof TarefasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chamados' | '/logs' | '/netbooks'
+  fullPaths: '/' | '/chamados' | '/logs' | '/netbooks' | '/notas' | '/tarefas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chamados' | '/logs' | '/netbooks'
-  id: '__root__' | '/' | '/chamados' | '/logs' | '/netbooks'
+  to: '/' | '/chamados' | '/logs' | '/netbooks' | '/notas' | '/tarefas'
+  id:
+    | '__root__'
+    | '/'
+    | '/chamados'
+    | '/logs'
+    | '/netbooks'
+    | '/notas'
+    | '/tarefas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +92,26 @@ export interface RootRouteChildren {
   ChamadosRoute: typeof ChamadosRoute
   LogsRoute: typeof LogsRoute
   NetbooksRoute: typeof NetbooksRoute
+  NotasRoute: typeof NotasRoute
+  TarefasRoute: typeof TarefasRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tarefas': {
+      id: '/tarefas'
+      path: '/tarefas'
+      fullPath: '/tarefas'
+      preLoaderRoute: typeof TarefasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notas': {
+      id: '/notas'
+      path: '/notas'
+      fullPath: '/notas'
+      preLoaderRoute: typeof NotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/netbooks': {
       id: '/netbooks'
       path: '/netbooks'
@@ -107,7 +148,19 @@ const rootRouteChildren: RootRouteChildren = {
   ChamadosRoute: ChamadosRoute,
   LogsRoute: LogsRoute,
   NetbooksRoute: NetbooksRoute,
+  NotasRoute: NotasRoute,
+  TarefasRoute: TarefasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
