@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { ImagePlus, X, Pencil, Trash2, Save, XCircle } from "lucide-react";
+import { ImagePlus, X, Pencil, Trash2, Save, XCircle, KanbanSquare } from "lucide-react";
 import {
   logActivity,
   STATUS_OPTIONS,
@@ -324,6 +324,7 @@ function ChamadosPage() {
                     onEdit={() => setEditingId(c.id)}
                     onDelete={() => deleteChamado(c)}
                     onStatus={(s) => changeStatus(c, s)}
+                    onCreateTask={() => criarTarefaDoChamado(c)}
                   />
                 ),
               )}
