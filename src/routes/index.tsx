@@ -118,10 +118,10 @@ function Index() {
     0,
   );
   const totalChamados = chamados.length;
-  const chamadosAbertos = chamados.filter(
-    (c) => c.status !== "resolvido",
-  ).length;
+  const chamadosAbertos = chamados.filter((c) => c.status !== "resolvido").length;
   const comGarantia = chamados.filter((c) => c.possui_garantia).length;
+  const tarefasAbertas = tasks.filter((t) => t.status !== "concluido").length;
+  const totalNotas = notes.length;
 
   return (
     <AppShell>
@@ -135,7 +135,7 @@ function Index() {
       {/* Stats */}
       <section
         aria-label="Indicadores"
-        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+        className="grid grid-cols-2 gap-3 lg:grid-cols-6"
       >
         <StatCard
           icon={<PackageCheck className="h-5 w-5" />}
@@ -159,26 +159,50 @@ function Index() {
           icon={<ShieldCheck className="h-5 w-5" />}
           label="Com garantia"
           value={comGarantia}
-          hint={`${totalChamados - comGarantia} sem garantia`}
+          hint={`${totalChamados - comGarantia} sem`}
+        />
+        <StatCard
+          icon={<ListTodo className="h-5 w-5" />}
+          label="Tarefas abertas"
+          value={tarefasAbertas}
+          hint={`${tasks.length} no total`}
+        />
+        <StatCard
+          icon={<NotebookPen className="h-5 w-5" />}
+          label="Notas"
+          value={totalNotas}
+          hint={`${notes.filter((n) => n.pinned).length} fixadas`}
         />
       </section>
 
       {/* Quick actions */}
       <section
         aria-label="Ações rápidas"
-        className="mt-6 grid gap-3 sm:grid-cols-3"
+        className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
       >
+        <ActionCard
+          to="/tarefas"
+          icon={<KanbanSquare className="h-6 w-6" />}
+          title="Quadro de tarefas"
+          desc="Kanban estilo ClickUp"
+        />
+        <ActionCard
+          to="/notas"
+          icon={<NotebookPen className="h-6 w-6" />}
+          title="Anotações"
+          desc="Páginas e lembretes"
+        />
         <ActionCard
           to="/netbooks"
           icon={<Laptop className="h-6 w-6" />}
           title="Nova retirada"
-          desc="Registrar netbooks emprestados"
+          desc="Registrar empréstimos"
         />
         <ActionCard
           to="/chamados"
           icon={<Wrench className="h-6 w-6" />}
           title="Novo chamado"
-          desc="Registrar aparelho danificado"
+          desc="Aparelho danificado"
         />
         <ActionCard
           to="/logs"
