@@ -122,6 +122,121 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          color: string | null
+          content: string
+          created_at: string
+          id: string
+          pinned: boolean
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_comments: {
+        Row: {
+          author: string
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          author: string
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          author?: string
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assignee: string | null
+          chamado_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          position: number
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee?: string | null
+          chamado_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          position?: number
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee?: string | null
+          chamado_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          position?: number
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
