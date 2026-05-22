@@ -466,7 +466,14 @@ function ChamadoCard({
         <span className="text-xs text-muted-foreground">
           {new Date(c.created_at).toLocaleString("pt-BR")}
         </span>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
+          <button
+            onClick={onCreateTask}
+            aria-label="Criar tarefa a partir deste chamado"
+            className="inline-flex min-h-9 items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <KanbanSquare className="h-3.5 w-3.5" /> Criar tarefa
+          </button>
           <button
             onClick={onEdit}
             aria-label="Editar chamado"
