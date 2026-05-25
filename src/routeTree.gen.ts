@@ -13,6 +13,7 @@ import { Route as TarefasRouteImport } from './routes/tarefas'
 import { Route as NotasRouteImport } from './routes/notas'
 import { Route as NetbooksRouteImport } from './routes/netbooks'
 import { Route as LogsRouteImport } from './routes/logs'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ChamadosRouteImport } from './routes/chamados'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -36,6 +37,11 @@ const LogsRoute = LogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChamadosRoute = ChamadosRouteImport.update({
   id: '/chamados',
   path: '/chamados',
@@ -50,6 +56,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
+  '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
   '/notas': typeof NotasRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
+  '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
   '/notas': typeof NotasRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chamados': typeof ChamadosRoute
+  '/login': typeof LoginRoute
   '/logs': typeof LogsRoute
   '/netbooks': typeof NetbooksRoute
   '/notas': typeof NotasRoute
@@ -74,13 +83,28 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chamados' | '/logs' | '/netbooks' | '/notas' | '/tarefas'
+  fullPaths:
+    | '/'
+    | '/chamados'
+    | '/login'
+    | '/logs'
+    | '/netbooks'
+    | '/notas'
+    | '/tarefas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chamados' | '/logs' | '/netbooks' | '/notas' | '/tarefas'
+  to:
+    | '/'
+    | '/chamados'
+    | '/login'
+    | '/logs'
+    | '/netbooks'
+    | '/notas'
+    | '/tarefas'
   id:
     | '__root__'
     | '/'
     | '/chamados'
+    | '/login'
     | '/logs'
     | '/netbooks'
     | '/notas'
@@ -90,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChamadosRoute: typeof ChamadosRoute
+  LoginRoute: typeof LoginRoute
   LogsRoute: typeof LogsRoute
   NetbooksRoute: typeof NetbooksRoute
   NotasRoute: typeof NotasRoute
@@ -126,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chamados': {
       id: '/chamados'
       path: '/chamados'
@@ -146,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChamadosRoute: ChamadosRoute,
+  LoginRoute: LoginRoute,
   LogsRoute: LogsRoute,
   NetbooksRoute: NetbooksRoute,
   NotasRoute: NotasRoute,
@@ -154,3 +187,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
