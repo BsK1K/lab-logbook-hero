@@ -62,7 +62,14 @@ function UserMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {
+            const email = user.email;
             await supabase.auth.signOut();
+            await logActivity({
+              action: "excluir",
+              entity: "comentario",
+              description: `Logout: ${email}`,
+              metadata: { email },
+            });
             toast.success("Sessão encerrada");
             navigate({ to: "/" });
           }}
