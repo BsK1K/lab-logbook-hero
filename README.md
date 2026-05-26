@@ -1,0 +1,1 @@
+Sistema de gestão para sala de informatica para gestão de entrada e saida de notebooks, tarefas com metodologia agil kanban, bloco de anotação e um sistema integro para registrar falhas, ou produtos danificados. 
