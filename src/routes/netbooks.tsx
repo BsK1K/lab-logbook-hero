@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { Check, Minus, Pencil, Plus, Trash2, X, GraduationCap, Users } from "lucide-react";
+import { Check, Minus, Pencil, Plus, Trash2, X, GraduationCap, Users, Zap } from "lucide-react";
 import { logActivity } from "@/lib/logger";
 
 export const Route = createFileRoute("/netbooks")({
