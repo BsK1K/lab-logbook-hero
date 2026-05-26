@@ -18,6 +18,10 @@ npx @electron/packager . "Sala-Informatica" \
   --ignore="^/src" --ignore="^/supabase" --ignore="^/electron-release"
 ```
 
+Para Windowns:
+
+npx @electron/packager . "Sala-Informatica" --platform=win32 --arch=x64 --out=electron-release --overwrite --icon=public/icon-512.png --ignore="^/src" --ignore="^/supabase" --ignore="^/electron-release"
+
 O resultado fica em `electron-release/Sala-Informatica-win32-x64/`. Basta zipar a pasta e distribuir — o usuário roda `Sala-Informatica.exe` direto, sem instalação.
 
 ## Linux / macOS

@@ -8,7 +8,7 @@ const path = require("path");
 //   https://project--fdefe534-3ab4-4c8c-97c0-483caea668e1-dev.lovable.app
 const APP_URL =
   process.env.APP_URL ||
-  "https://project--fdefe534-3ab4-4c8c-97c0-483caea668e1.lovable.app";
+  "https://project--fdefe534-3ab4-4c8c-97c0-483caea668e1-dev.lovable.app";
 
 function createWindow() {
   const win = new BrowserWindow({
