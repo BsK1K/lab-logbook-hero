@@ -49,15 +49,33 @@ function LogsPage() {
   const [filter, setFilter] = useState<"todos" | LogAction>("todos");
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("activity_logs")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(500);
-      if (data) setLogs(data as Log[]);
-      setLoading(false);
+      if (!cancelled && data) setLogs(data as Log[]);
+      if (!cancelled) setLoading(false);
     })();
+
+    // Realtime: novos logs aparecem sem refresh
+    const channel = supabase
+      .channel("activity_logs_live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "activity_logs" },
+        (payload) => {
+          setLogs((prev) => [payload.new as Log, ...prev].slice(0, 500));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filtered =

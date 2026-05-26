@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Monitor } from "lucide-react";
+import { logActivity } from "@/lib/logger";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -41,11 +42,23 @@ function LoginPage() {
           },
         });
         if (error) throw error;
+        await logActivity({
+          action: "criar",
+          entity: "comentario",
+          description: `Nova conta criada: ${email}`,
+          metadata: { email, name },
+        });
         toast.success("Conta criada! Você já pode entrar.");
         setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await logActivity({
+          action: "editar",
+          entity: "comentario",
+          description: `Login: ${email}`,
+          metadata: { email },
+        });
         toast.success("Bem-vindo!");
         navigate({ to: "/" });
       }

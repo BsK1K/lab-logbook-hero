@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { Check, Minus, Pencil, Plus, Trash2, X, GraduationCap, Users } from "lucide-react";
+import { Check, Minus, Pencil, Plus, Trash2, X, GraduationCap, Users, Zap } from "lucide-react";
 import { logActivity } from "@/lib/logger";
 
 export const Route = createFileRoute("/netbooks")({
@@ -141,6 +141,56 @@ function NetbooksPage() {
     fetchLoans();
   };
 
+  const quickRetirada = async (
+    quickTipo: "aluno" | "professor",
+    quickCategoria: Categoria,
+  ) => {
+    const salaQ = sala.trim();
+    const qP = qtdPositivo;
+    const qM = qtdMultilaser;
+    if (!salaQ) {
+      toast.error("Informe a sala antes da retirada rápida");
+      return;
+    }
+    if (qP + qM === 0) {
+      toast.error("Informe a quantidade de aparelhos");
+      return;
+    }
+    const nomeAuto =
+      quickTipo === "aluno"
+        ? `Aluno(a) — Sala ${salaQ}`
+        : `Professor(a) — Sala ${salaQ}`;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("netbook_loans")
+      .insert({
+        tipo_usuario: quickTipo,
+        nome: nomeAuto,
+        sala: salaQ,
+        qtd_positivo: qP,
+        qtd_multilaser: qM,
+        categoria: quickCategoria,
+      })
+      .select()
+      .single();
+    setLoading(false);
+    if (error) {
+      toast.error("Erro ao registrar retirada rápida");
+      return;
+    }
+    await logActivity({
+      action: "retirar",
+      entity: "retirada",
+      entity_id: data?.id,
+      description: `⚡ Retirada rápida [${CATEGORIA_LABEL[quickCategoria]}]: ${nomeAuto} — ${qP} Positivo + ${qM} Multilaser`,
+      metadata: { tipo: quickTipo, sala: salaQ, qtdPositivo: qP, qtdMultilaser: qM, categoria: quickCategoria, rapida: true },
+    });
+    toast.success(`Retirada rápida registrada — ${nomeAuto}`);
+    setQtdPositivo(0);
+    setQtdMultilaser(0);
+    fetchLoans();
+  };
+
   const filtered = useMemo(
     () => loans.filter((l) => filtro === "todos" || l.categoria === filtro),
     [loans, filtro],
@@ -151,6 +201,71 @@ function NetbooksPage() {
       <h1 className="mb-5 text-xl font-semibold sm:text-2xl">
         Retirada de Netbooks
       </h1>
+
+      {/* Retirada rápida (1 clique) */}
+      <section
+        className="mb-6 overflow-hidden rounded-xl border bg-card shadow-[var(--shadow-md)]"
+        aria-label="Retirada rápida"
+      >
+        <div className="flex items-center gap-2 border-b bg-[image:var(--gradient-subtle)] px-4 py-2.5">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+            <Zap className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">Retirada rápida</h2>
+            <p className="text-xs text-muted-foreground">
+              Sem precisar perguntar o nome — preencha sala + quantidade e toque em um botão.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+          <Field label="Sala" htmlFor="quick-sala">
+            <input
+              id="quick-sala"
+              value={sala}
+              onChange={(e) => setSala(e.target.value)}
+              className="input"
+              placeholder="Ex: Sala 12"
+            />
+          </Field>
+          <Stepper label="Positivo" value={qtdPositivo} onChange={setQtdPositivo} />
+          <Stepper label="Multilaser" value={qtdMultilaser} onChange={setQtdMultilaser} />
+        </div>
+        <div className="grid gap-2 border-t bg-muted/30 p-3 sm:grid-cols-4">
+          <button
+            type="button"
+            onClick={() => quickRetirada("aluno", "geral")}
+            disabled={loading}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-sm)] transition hover:opacity-90 disabled:opacity-50"
+          >
+            <Users className="h-4 w-4" /> Aluno · Geral
+          </button>
+          <button
+            type="button"
+            onClick={() => quickRetirada("aluno", "tecnico")}
+            disabled={loading}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-md border border-primary bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/20 disabled:opacity-50"
+          >
+            <GraduationCap className="h-4 w-4" /> Aluno · Técnico
+          </button>
+          <button
+            type="button"
+            onClick={() => quickRetirada("professor", "geral")}
+            disabled={loading}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+          >
+            <Users className="h-4 w-4" /> Professor · Geral
+          </button>
+          <button
+            type="button"
+            onClick={() => quickRetirada("professor", "tecnico")}
+            disabled={loading}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
+          >
+            <GraduationCap className="h-4 w-4" /> Professor · Técnico
+          </button>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <form

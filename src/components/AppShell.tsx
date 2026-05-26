@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/logger";
 
 function UserMenu() {
   const { user, loading } = useAuth();
@@ -61,7 +62,14 @@ function UserMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={async () => {
+            const email = user.email;
             await supabase.auth.signOut();
+            await logActivity({
+              action: "excluir",
+              entity: "comentario",
+              description: `Logout: ${email}`,
+              metadata: { email },
+            });
             toast.success("Sessão encerrada");
             navigate({ to: "/" });
           }}
