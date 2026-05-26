@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/logger";
 
 function UserMenu() {
   const { user, loading } = useAuth();
