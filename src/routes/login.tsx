@@ -42,11 +42,23 @@ function LoginPage() {
           },
         });
         if (error) throw error;
+        await logActivity({
+          action: "criar",
+          entity: "comentario",
+          description: `Nova conta criada: ${email}`,
+          metadata: { email, name },
+        });
         toast.success("Conta criada! Você já pode entrar.");
         setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await logActivity({
+          action: "editar",
+          entity: "comentario",
+          description: `Login: ${email}`,
+          metadata: { email },
+        });
         toast.success("Bem-vindo!");
         navigate({ to: "/" });
       }
