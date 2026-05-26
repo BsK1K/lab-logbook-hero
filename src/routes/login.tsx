@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Monitor } from "lucide-react";
+import { logActivity } from "@/lib/logger";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
