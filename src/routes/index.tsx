@@ -184,7 +184,7 @@ function Index() {
           to="/tarefas"
           icon={<KanbanSquare className="h-6 w-6" />}
           title="Quadro de tarefas"
-          desc="Kanban estilo ClickUp"
+          desc="Kanban"
         />
         <ActionCard
           to="/notas"
