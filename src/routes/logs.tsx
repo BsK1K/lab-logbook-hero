@@ -11,6 +11,8 @@ import {
   RefreshCw,
   PackageCheck,
   PackageOpen,
+  MessageSquare,
+  MoveRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/logs")({ component: LogsPage });
@@ -32,6 +34,8 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   status: RefreshCw,
   devolver: PackageCheck,
   retirar: PackageOpen,
+  comentar: MessageSquare,
+  mover: MoveRight,
 };
 
 const COLORS: Record<string, string> = {
@@ -41,6 +45,8 @@ const COLORS: Record<string, string> = {
   status: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   devolver: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
   retirar: "bg-primary/15 text-primary",
+  comentar: "bg-blue-500/15 text-blue-700 dark:text-blue-400",
+  mover: "bg-violet-500/15 text-violet-700 dark:text-violet-400",
 };
 
 function LogsPage() {
