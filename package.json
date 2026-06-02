@@ -13,9 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "electron:build": "npm run build && electron-packager . \"Sala-Informatica\" --platform=win32 --arch=x64 --out=electron-release --overwrite --icon=public/icon-512.ico --ignore=\"^/src\" --ignore=\"^/supabase\""
-    
   },
-  
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
     "@hookform/resolvers": "^5.2.2",
@@ -59,6 +57,7 @@
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
+    "nitro": "3.0.260429-beta",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",
@@ -76,7 +75,7 @@
   "devDependencies": {
     "@electron/packager": "^18.4.4",
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "^1.7.0",
+    "@lovable.dev/vite-tanstack-config": "2.3.1",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
