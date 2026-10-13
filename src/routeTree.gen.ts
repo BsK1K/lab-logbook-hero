@@ -9,37 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TarefasRouteImport } from './routes/tarefas'
-import { Route as NotasRouteImport } from './routes/notas'
-import { Route as NetbooksRouteImport } from './routes/netbooks'
-import { Route as LogsRouteImport } from './routes/logs'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ChamadosRouteImport } from './routes/chamados'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChamadosRouteImport } from './routes/chamados'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LogsRouteImport } from './routes/logs'
+import { Route as NetbooksRouteImport } from './routes/netbooks'
+import { Route as NotasRouteImport } from './routes/notas'
+import { Route as TarefasRouteImport } from './routes/tarefas'
 
-const TarefasRoute = TarefasRouteImport.update({
-  id: '/tarefas',
-  path: '/tarefas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotasRoute = NotasRouteImport.update({
-  id: '/notas',
-  path: '/notas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NetbooksRoute = NetbooksRouteImport.update({
-  id: '/netbooks',
-  path: '/netbooks',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LogsRoute = LogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChamadosRoute = ChamadosRouteImport.update({
@@ -47,9 +27,29 @@ const ChamadosRoute = ChamadosRouteImport.update({
   path: '/chamados',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogsRoute = LogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NetbooksRoute = NetbooksRouteImport.update({
+  id: '/netbooks',
+  path: '/netbooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotasRoute = NotasRouteImport.update({
+  id: '/notas',
+  path: '/notas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarefasRoute = TarefasRouteImport.update({
+  id: '/tarefas',
+  path: '/tarefas',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -84,22 +84,10 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/chamados'
-    | '/login'
-    | '/logs'
-    | '/netbooks'
-    | '/notas'
-    | '/tarefas'
+    '/' | '/chamados' | '/login' | '/logs' | '/netbooks' | '/notas' | '/tarefas'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/chamados'
-    | '/login'
-    | '/logs'
-    | '/netbooks'
-    | '/notas'
-    | '/tarefas'
+    '/' | '/chamados' | '/login' | '/logs' | '/netbooks' | '/notas' | '/tarefas'
   id:
     | '__root__'
     | '/'
@@ -123,39 +111,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tarefas': {
-      id: '/tarefas'
-      path: '/tarefas'
-      fullPath: '/tarefas'
-      preLoaderRoute: typeof TarefasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notas': {
-      id: '/notas'
-      path: '/notas'
-      fullPath: '/notas'
-      preLoaderRoute: typeof NotasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/netbooks': {
-      id: '/netbooks'
-      path: '/netbooks'
-      fullPath: '/netbooks'
-      preLoaderRoute: typeof NetbooksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/logs': {
-      id: '/logs'
-      path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof LogsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chamados': {
@@ -165,11 +125,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChamadosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logs': {
+      id: '/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof LogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/netbooks': {
+      id: '/netbooks'
+      path: '/netbooks'
+      fullPath: '/netbooks'
+      preLoaderRoute: typeof NetbooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notas': {
+      id: '/notas'
+      path: '/notas'
+      fullPath: '/notas'
+      preLoaderRoute: typeof NotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarefas': {
+      id: '/tarefas'
+      path: '/tarefas'
+      fullPath: '/tarefas'
+      preLoaderRoute: typeof TarefasRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
