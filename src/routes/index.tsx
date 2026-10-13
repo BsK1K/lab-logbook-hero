@@ -342,6 +342,7 @@ function Index() {
             <h2 className="text-sm font-semibold text-muted-foreground">Tarefas recentes</h2>
             <Link
               to="/tarefas"
+              search={{ task: undefined }}
               className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Abrir quadro <ArrowRight className="h-3 w-3" aria-hidden="true" />
