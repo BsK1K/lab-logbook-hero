@@ -94,6 +94,7 @@ export type Database = {
           qtd_positivo: number
           retirada_at: string
           sala: string
+          school_reservation_id: string | null
           tipo_usuario: string
         }
         Insert: {
@@ -106,6 +107,7 @@ export type Database = {
           qtd_positivo?: number
           retirada_at?: string
           sala: string
+          school_reservation_id?: string | null
           tipo_usuario: string
         }
         Update: {
@@ -118,9 +120,18 @@ export type Database = {
           qtd_positivo?: number
           retirada_at?: string
           sala?: string
+          school_reservation_id?: string | null
           tipo_usuario?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "netbook_loans_school_reservation_id_fkey"
+            columns: ["school_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "school_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notes: {
         Row: {
@@ -179,6 +190,262 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      school_allocations: {
+        Row: {
+          equipment_id: string
+          reservation_id: string
+        }
+        Insert: {
+          equipment_id: string
+          reservation_id: string
+        }
+        Update: {
+          equipment_id?: string
+          reservation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_allocations_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "school_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_allocations_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "school_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_equipment: {
+        Row: {
+          asset_code: string | null
+          battery: number | null
+          battery_observed_at: string | null
+          condition: string
+          current_location_id: string | null
+          destination: string | null
+          enabled: boolean
+          home_id: string
+          id: string
+          internal_index: number
+          kind: string
+          state: string
+        }
+        Insert: {
+          asset_code?: string | null
+          battery?: number | null
+          battery_observed_at?: string | null
+          condition?: string
+          current_location_id?: string | null
+          destination?: string | null
+          enabled?: boolean
+          home_id: string
+          id?: string
+          internal_index: number
+          kind: string
+          state?: string
+        }
+        Update: {
+          asset_code?: string | null
+          battery?: number | null
+          battery_observed_at?: string | null
+          condition?: string
+          current_location_id?: string | null
+          destination?: string | null
+          enabled?: boolean
+          home_id?: string
+          id?: string
+          internal_index?: number
+          kind?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_equipment_current_location_id_fkey"
+            columns: ["current_location_id"]
+            isOneToOne: false
+            referencedRelation: "school_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_equipment_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "school_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_movements: {
+        Row: {
+          action: string
+          actor_id: string
+          battery: number | null
+          created_at: string
+          destination: string | null
+          destination_id: string | null
+          equipment_id: string
+          id: string
+          loan_id: string | null
+          notes: string
+          reservation_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          battery?: number | null
+          created_at?: string
+          destination?: string | null
+          destination_id?: string | null
+          equipment_id: string
+          id?: string
+          loan_id?: string | null
+          notes?: string
+          reservation_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          battery?: number | null
+          created_at?: string
+          destination?: string | null
+          destination_id?: string | null
+          equipment_id?: string
+          id?: string
+          loan_id?: string | null
+          notes?: string
+          reservation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_movements_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "school_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_movements_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "school_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_movements_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "netbook_loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_movements_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "school_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_reservations: {
+        Row: {
+          created_at: string
+          destination: string
+          ends_at: string
+          id: string
+          notes: string
+          purpose: string
+          quantity: number
+          resource_id: string
+          starts_at: string
+          status: string
+          students: number | null
+          teacher: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination?: string
+          ends_at: string
+          id?: string
+          notes?: string
+          purpose?: string
+          quantity?: number
+          resource_id: string
+          starts_at: string
+          status?: string
+          students?: number | null
+          teacher: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          ends_at?: string
+          id?: string
+          notes?: string
+          purpose?: string
+          quantity?: number
+          resource_id?: string
+          starts_at?: string
+          status?: string
+          students?: number | null
+          teacher?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_reservations_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "school_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_resources: {
+        Row: {
+          accepted_battery: number[]
+          battery_valid_hours: number
+          capacity: number
+          code: string
+          enabled: boolean
+          id: string
+          kind: string
+          location: string
+          name: string
+          requires_approval: boolean
+        }
+        Insert: {
+          accepted_battery?: number[]
+          battery_valid_hours?: number
+          capacity?: number
+          code: string
+          enabled?: boolean
+          id?: string
+          kind: string
+          location: string
+          name: string
+          requires_approval?: boolean
+        }
+        Update: {
+          accepted_battery?: number[]
+          battery_valid_hours?: number
+          capacity?: number
+          code?: string
+          enabled?: boolean
+          id?: string
+          kind?: string
+          location?: string
+          name?: string
+          requires_approval?: boolean
         }
         Relationships: []
       }
@@ -264,15 +531,56 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      school_action: {
+        Args: { p_action: string; p_data: Json }
+        Returns: string
+      }
+      school_audit: {
+        Args: { p_action: string; p_id: string; p_meta: Json; p_text: string }
+        Returns: undefined
+      }
+      school_available: {
+        Args: { p_end: string; p_resource: string; p_start: string }
+        Returns: string[]
+      }
+      school_lock: { Args: never; Returns: undefined }
+      school_snapshot: {
+        Args: { p_end: string; p_start: string }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -399,6 +707,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
